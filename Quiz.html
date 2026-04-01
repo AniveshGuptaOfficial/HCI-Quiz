@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HCI Quiz Practice Portal</title>
+  <style>
+    :root { --primary: #3b82f6; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #1e2937);
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header { text-align: center; padding: 40px 0 20px; }
+    h1 {
+      font-size: 2.8rem;
+      background: linear-gradient(90deg, #60a5fa, #a5b4fc);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle { color: #94a3b8; font-size: 1.3rem; }
+
+    .nav {
+      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 30px 0;
+    }
+    .nav button {
+      padding: 10px 22px;
+      border: none;
+      background: #334155;
+      color: white;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .nav button.active, .nav button:hover { background: var(--primary); }
+
+    .quiz-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: #1e2937;
+      border-radius: 16px;
+      padding: 25px;
+      transition: 0.3s;
+    }
+    .card:hover { transform: translateY(-8px); box-shadow: 0 15px 30px rgba(0,0,0,0.4); }
+
+    .start-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    .quiz-container {
+      display: none;
+      background: #1e2937;
+      border-radius: 16px;
+      padding: 35px;
+      margin-top: 20px;
+    }
+    .progress { text-align: center; font-size: 1.3rem; margin-bottom: 25px; color: #94a3b8; }
+    .question { font-size: 1.4rem; line-height: 1.65; margin-bottom: 30px; }
+
+    .options { display: flex; flex-direction: column; gap: 14px; }
+    .option {
+      background: #334155;
+      padding: 18px 22px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+    }
+    .option:hover { background: #475569; }
+    .option.selected { border-color: #60a5fa; }
+    .option.correct { background: #166534 !important; border-color: #4ade80; color: white; }
+    .option.wrong { background: #7f1d1d !important; border-color: #f87171; color: white; }
+
+    .nav-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+    .nav-buttons button {
+      padding: 14px 28px;
+      font-size: 1.05rem;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      flex: 1;
+    }
+    #prev-btn { background: #64748b; }
+    #next-btn { background: var(--primary); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>HCI Quiz Practice Portal</h1>
+      <p class="subtitle">Human-Computer Interaction • All 11 Weeks + Mixed Quiz (110 Questions)</p>
+    </header>
+
+    <div class="nav">
+      <button onclick="startQuiz(0)" class="active" id="nav-0">Mixed Quiz (110 Qs)</button>
+      <button onclick="startQuiz(1)" id="nav-1">Week 1</button>
+      <button onclick="startQuiz(2)" id="nav-2">Week 2</button>
+      <button onclick="startQuiz(3)" id="nav-3">Week 3</button>
+      <button onclick="startQuiz(4)" id="nav-4">Week 4</button>
+      <button onclick="startQuiz(5)" id="nav-5">Week 5</button>
+      <button onclick="startQuiz(6)" id="nav-6">Week 6</button>
+      <button onclick="startQuiz(7)" id="nav-7">Week 7</button>
+      <button onclick="startQuiz(8)" id="nav-8">Week 8</button>
+      <button onclick="startQuiz(9)" id="nav-9">Week 9</button>
+      <button onclick="startQuiz(10)" id="nav-10">Week 10</button>
+      <button onclick="startQuiz(11)" id="nav-11">Week 11</button>
+    </div>
+
+    <div id="home-screen">
+      <div class="quiz-grid" id="quiz-grid"></div>
+    </div>
+
+    <!-- Quiz Area -->
+    <div id="quiz-screen" class="quiz-container">
+      <div class="progress">Question <span id="q-number">1</span> / <span id="total-q">10</span></div>
+      <div class="question" id="question-text"></div>
+      <div class="options" id="options-container"></div>
+
+      <div class="nav-buttons">
+        <button id="prev-btn" onclick="prevQuestion()">← Previous</button>
+        <button id="next-btn" onclick="nextQuestion()">Next Question →</button>
+      </div>
+    </div>
+
+    <!-- Score Screen -->
+    <div id="score-screen" class="quiz-container score-screen" style="display:none;">
+      <h2>Your Score</h2>
+      <div id="final-score"></div>
+      <p id="score-message" style="font-size:1.5rem; margin:25px 0;"></p>
+      <button onclick="restartCurrentQuiz()" style="background:#3b82f6; color:white; padding:15px 40px; border:none; border-radius:50px; font-size:1.1rem; margin:10px;">Try Again</button>
+      <button onclick="goHome()" style="background:#64748b; color:white; padding:15px 40px; border:none; border-radius:50px; font-size:1.1rem; margin:10px;">Back to Home</button>
+    </div>
+  </div>
+
+  <script>
+    // ==================== ALL 11 WEEKS QUESTIONS ====================
+    const weekQuestions = [
+      [], // 0: Mixed
+
+      // Week 1
+      [
+        {q:"What is the primary goal of Human-Computer Interaction (HCI)?", options:["Improve computer hardware","Make interaction effective, efficient, and satisfying","Reduce data usage","Teach programming"], ans:1},
+        {q:"Which example represents bad design?", options:["A door with a clear push/pull label","A TV remote with too many buttons","A phone with customizable themes","A book with a table of contents"], ans:1},
+        {q:"Usability mainly describes:", options:["App color scheme","How easily users achieve their goals","Internet speed","Type of hardware"], ans:1},
+        {q:"Which of the following is an interactive system?", options:["Printed map","Digital ATM touch interface","Wall poster","Paper calendar"], ans:1},
+        {q:"Why is understanding user needs important in user-centered design?", options:["To reduce app cost","To match designs with real user behaviors","To create fancy animations","To increase marketing budget"], ans:1},
+        {q:"Why is a door without signifiers (push/pull marks) confusing?", options:["It has too much color","It uses expensive material","Its affordance and signifiers are unclear","It is automatic"], ans:2},
+        {q:"What makes a TV remote with many buttons a poor design example?", options:["It is heavy","Battery drains quickly","Cognitive overload and poor usability","It is not colorful"], ans:2},
+        {q:"Which step in user-centered design involves understanding user challenges and context?", options:["Advertising","Deployment","User research","Coding"], ans:2},
+        {q:"Which HCI principle was violated in the Boeing 737 MAX case?", options:["Too many UI colors","No touchscreen support","Lack of visibility and poor feedback for automation","Icons were too small"], ans:2},
+        {q:"Which concept explains why users make errors when controls do not match their mental model?", options:["Animation design","Aesthetic layout","Mental models and signifiers","Download speed"], ans:2}
+      ],
+
+      // Week 2
+      [
+        {q:"According to Henry Dreyfuss’s idea of design, when does a designer succeed?", options:["When the product uses the latest technology","When users feel comfortable and can use the product without friction","When the product is inexpensive","When the product looks stylish"], ans:1},
+        {q:"What was a major reason for the commercial failure of Google Glass?", options:["No camera support","Privacy concerns and awkward design","Low screen brightness","Lack of wireless connectivity"], ans:1},
+        {q:"What is the first step in deciding what to design?", options:["Finalizing the brand logo","Identifying who the users are","Choosing color schemes","Deciding the marketing plan"], ans:1},
+        {q:"What is the main goal of interaction design according to Sharp, Rogers, and Preece?", options:["Supporting communication and interaction in daily life","Reducing manufacturing costs","Increasing screen brightness","Designing for entertainment"], ans:0},
+        {q:"Which of the following best represents User Experience (UX)?", options:["How users feel emotionally while using the product","The processor speed of a device","Only the visual layout","The number of features in an app"], ans:0},
+        {q:"Why are multidisciplinary teams valuable in interaction design?", options:["They reduce the cost of development","They make meetings shorter","They generate diverse ideas and perspectives","They eliminate the need for user testing"], ans:2},
+        {q:"What is inclusivity in design?", options:["Making interfaces look colorful","Designing products for diverse user needs and backgrounds","Removing advanced features","Designing only for expert users"], ans:1},
+        {q:"What is accessibility mainly focused on?", options:["Increasing entertainment content","Improving device speed","Making products usable by people with disabilities","Reducing UI animations"], ans:2},
+        {q:"Which design principle ensures that crucial functions are easy to locate?", options:["Memorability","Flexibility","Aesthetics","Visibility"], ans:3},
+        {q:"What is affordance in design?", options:["The cost of the product","Visual cues that indicate how an element should be used","The brand reputation","The color contrast ratio"], ans:1}
+      ],
+
+      // Week 3
+      [
+        {q:"Which stage of Design Thinking focuses on understanding the user’s needs and behaviors?", options:["Prototype","Empathize","Test","Implement"], ans:1},
+        {q:"The Double Diamond design process was developed by:", options:["Apple","Nielsen Norman Group","UK Design Council","Microsoft Research"], ans:2},
+        {q:"Which of the following is not one of the six stages of Design Thinking?", options:["Define","Ideate","Evaluate","Empathize"], ans:2},
+        {q:"In the Define stage, the key goal is to:", options:["Sketch wireframes","Frame the problem clearly","Conduct A/B testing","Create high-fidelity prototypes"], ans:1},
+        {q:"Activity-centered design primarily focuses on:", options:["User preferences","User emotions","Tasks and activities users perform","Visual layout aesthetics"], ans:2},
+        {q:"Which of the following is not a key component of system design?", options:["Data Management","Interfaces","Memory recall","Architecture"], ans:2},
+        {q:"The Interaction Design Process emphasizes four basic activities. Which one of these is included?", options:["Monetization","Discovering requirements","Branding","Advertising"], ans:1},
+        {q:"Genius design relies heavily on:", options:["Extensive user testing","Designer intuition and expertise","Market surveys","Accessibility guidelines"], ans:1},
+        {q:"Which lifecycle model is based on rapid prototyping and iteration within 5 days?", options:["Research in the Wild","Waterfall Model","Google Design Sprints","Spiral Model"], ans:2},
+        {q:"According to Week 3, user involvement is important because:", options:["It helps reduce the app size","Users can become stakeholders and contribute feedback","It speeds up coding","It avoids the need for iteration"], ans:1}
+      ],
+
+      // Week 4
+      [
+        {q:"User perspectives in HCI help designers understand:", options:["Only the visual UI layout","How users perceive and interact with technology","How designers communicate with developers","Only system requirements"], ans:1},
+        {q:"Which of the following is an example of accessibility consideration?", options:["Using bright colors only","Providing adjustable font sizes and dyslexia-friendly modes","Adding decorative animations","Increasing advertisements"], ans:1},
+        {q:"Novice users generally prefer:", options:["Only voice-based interfaces","Highly customizable and complex interfaces","Minimal guidance and advanced shortcuts","Simple interfaces with clear instructions"], ans:3},
+        {q:"A persona is best described as:", options:["A real user hired by the company","A fictional, data-driven representation of a user","A system architecture model","A marketing campaign tool"], ans:1},
+        {q:"Surveys in user research are useful because they:", options:["Always provide emotional depth","Allow quick collection of large-scale data","Guarantee unbiased answers","Replace interviews completely"], ans:1},
+        {q:"Empathy mapping categorizes insights into:", options:["Features, modules, layouts, workflows","Says, Thinks, Does, Feels","Inputs, outputs, processes, storage","Goals, sub-goals, errors, feedback"], ans:1},
+        {q:"A common challenge in user perspectives is:", options:["Too many designers","Conflicting needs among different user groups","Unlimited research time","Lack of design tools"], ans:1},
+        {q:"Affinity mapping is mainly used to:", options:["Assign tasks to team members","Organize qualitative data into themes","Remove unnecessary system features","Design UI wireframes"], ans:1},
+        {q:"A POV (Point of View) statement includes:", options:["System hardware requirements","User, need, and insight","UI color preferences","Coding-level issues"], ans:1},
+        {q:"Data clustering helps in:", options:["Grouping users based on similar behaviors","Randomly distributing users","Increasing device performance","Removing prototypes"], ans:0}
+      ],
+
+      // Week 5
+      [
+        {q:"Which of the following best describes a conceptual model?", options:["A detailed UI layout","A mental representation of how a system works","A list of system requirements","A coding guideline document"], ans:1},
+        {q:"What is an example of an assumption in interface design?", options:["Testing a prototype with users","Taking something for granted without evidence","Mapping user journeys","Writing code before wireframes"], ans:1},
+        {q:"Which component is commonly used in online shopping conceptual models?", options:["Homepage wallpaper","Shopping cart","Video playback controls","Battery indicator"], ans:1},
+        {q:"Interface metaphors help users by:", options:["Making systems slower","Increasing hardware complexity","Leveraging familiarity for learning new systems","Removing the need for feedback"], ans:2},
+        {q:"Which cognitive principle states that decision time increases with more choices?", options:["Miller’s Law","Fitts’s Law","Hick’s Law","Gestalt Law of Proximity"], ans:2},
+        {q:"What is the purpose of a system image?", options:["To describe internal code structure","To show how the system actually works through the interface","To explain marketing strategy","To define business revenue"], ans:1},
+        {q:"Which of the following is a drawback of interface metaphors?", options:["They always reduce cognitive load","They break all cultural norms","They may limit designers’ creativity","They remove the need for conceptual models"], ans:2},
+        {q:"Cognitive load increases when:", options:["Interfaces use familiar patterns","Users see excessive irrelevant information","Steps are minimized","Icons are consistent"], ans:1},
+        {q:"Which cognitive aspect focuses on how users perceive visual elements?", options:["Decision-making","Perception","Problem-solving","Reflective cognition"], ans:1},
+        {q:"Which emerging trend in interfaces directly uses the human brain for input?", options:["AR overlays","Voice interaction","Brain–Computer Interfaces","Card-based UI"], ans:2}
+      ],
+
+      // Week 6
+      [
+        {q:"What is the primary purpose of identifying data requirements in HCI?", options:["To create marketing campaigns","To determine what information is needed to inform design decisions","To reduce memory usage in applications","To choose programming languages"], ans:1},
+        {q:"Which type of data includes demographics and user preferences?", options:["System data","User data","Context data","Task data"], ans:1},
+        {q:"Which of the following is a qualitative data-gathering technique?", options:["Analytics logs","Surveys with multiple-choice questions","User interviews","System performance metrics"], ans:2},
+        {q:"Crowdsourcing in HCI is mainly beneficial because:", options:["It reduces the need for user testing","It gathers data from diverse and large populations","It guarantees unbiased data automatically","It eliminates qualitative research"], ans:1},
+        {q:"Fairness in data collection ensures that:", options:["All users are treated equitably in data and algorithms","The system runs faster","Participants cannot withdraw","Only expert users are included"], ans:0},
+        {q:"Field studies involve:", options:["Observing users in controlled lab settings","Recording system logs only","Observing users in their natural environment","Removing outliers from datasets"], ans:2},
+        {q:"Which tool is commonly used for real-time data handling?", options:["Tableau","Firebase","NVivo","SPSS"], ans:1},
+        {q:"Which of the following is a key issue in data ethics?", options:["Increasing app performance","User interface color selection","Transparency in how data is collected and used","Adding more user features"], ans:2},
+        {q:"Inter-Annotator Agreement (IAA) is used to:", options:["Visualize data using graphs","Measure consistency among multiple annotators","Improve system performance","Replace manual labeling"], ans:1},
+        {q:"Which statistical method is used to find relationships between variables?", options:["Affinity mapping","Regression analysis","Unstructured interviewing","Card sorting"], ans:1}
+      ],
+
+      // Week 7
+      [
+        {q:"What is a prototype in interaction design?", options:["A finalized product","A manifestation of a design that stakeholders can interact with","Only a software demo","A marketing document"], ans:1},
+        {q:"Which of the following is an example of Lo-Fi prototyping?", options:["Pixel-perfect UI","Paper sketches","Fully interactive app","High-resolution mockup"], ans:1},
+        {q:"Storyboards in prototyping help designers by:", options:["Writing code automatically","Breaking user tasks into scenes to visualize interaction","Generating analytics","Creating animations for UI"], ans:1},
+        {q:"Which prototyping type provides broad coverage with low detail?", options:["Vertical","Horizontal","Hi-Fi","Wizard-of-Oz"], ans:1},
+        {q:"Mid-Fidelity prototypes typically include:", options:["Stick figures only","Grayscale wireframes with limited interactions","Pixel-perfect color UI","Final design animations"], ans:1},
+        {q:"Smart UI refers to interfaces that:", options:["Are built only with code","Use AI to adapt to user behavior and context","Do not require user data","Never personalize content"], ans:1},
+        {q:"Which is an advantage of Smart UI?", options:["Random interface behavior","Personalized and adaptive user experience","Increased manual effort for users","No support for accessibility"], ans:1},
+        {q:"Wizard-of-Oz prototyping involves:", options:["A human simulating system responses behind the scenes","Full autonomous system","Physical hardware testing","Running A/B experiments"], ans:0},
+        {q:"Vertical prototyping focuses on:", options:["A wide range of features with little detail","A detailed exploration of a single feature","Creating only animations","Testing final UI only"], ans:1},
+        {q:"Which tool is commonly used for mid or high-fidelity UI prototypes?", options:["Sticky notes","Figma","Lego blocks","Scenarios only"], ans:1}
+      ],
+
+      // Week 8
+      [
+        {q:"What is the main purpose of evaluation in HCI?", options:["To increase hardware performance","To assess usability, effectiveness, and user experience","To test marketing strategies","To reduce development cost"], ans:1},
+        {q:"Which type of evaluation occurs during the design process to refine the product?", options:["Summative","Diagnostic","Formative","Longitudinal"], ans:2},
+        {q:"Usability testing primarily involves:", options:["Experts reviewing code","Observing real users performing tasks","Only collecting analytics","Replacing prototypes with final UI"], ans:1},
+        {q:"Which evaluation method requires evaluators to simulate user behavior step-by-step?", options:["Heuristic Evaluation","Cognitive Walkthrough","A/B Testing","Eye Tracking"], ans:1},
+        {q:"In experiment design, which approach assigns different groups to different conditions?", options:["Within-subjects","Mixed methods","Between-subjects","Triangulated testing"], ans:2},
+        {q:"Which metric measures how fast users complete a task?", options:["Error severity","Task success rate","Time on task","Net Promoter Score"], ans:2},
+        {q:"Eye tracking helps evaluators understand:", options:["System load time","Where users focus attention on the interface","User emotions only","The number of app downloads"], ans:1},
+        {q:"Which principle ensures that participants voluntarily agree to evaluation?", options:["Counterbalancing","Informed consent","Aesthetic consistency","Reliability"], ans:1},
+        {q:"Which evaluation method is cost-effective and identifies issues early using established principles?", options:["A/B Testing","Heuristic Evaluation","Biometric Metrics","Field Studies"], ans:1},
+        {q:"Which predictive model estimates pointing time based on movement distance and target size?", options:["Hick’s Law","Mental Model","Cognitive Load Theory","Fitts’s Law"], ans:3}
+      ],
+
+      // Week 9
+      [
+        {q:"IoT refers to:", options:["A network of physical objects with sensors and connectivity","Devices that store only offline data","Tools without any automation","Only entertainment systems"], ans:0},
+        {q:"The main goal of IoT is:", options:["To increase device size","To “connect the unconnected”","To remove automation from homes","To limit wireless technology"], ans:1},
+        {q:"Which example shows HCI + IoT interaction?", options:["A robotic arm running without feedback","Users controlling smart bulbs via a mobile app","Devices interacting only through printed manuals","A non-digital clock"], ans:1},
+        {q:"Which interaction modalities are common in IoT?", options:["Voice, gesture, and touch","Only handwritten input","Only QR-code scanning","Only mechanical switches"], ans:0},
+        {q:"A major HCI challenge in IoT is:", options:["Increasing UI colors","Achieving consistent interaction across many devices","Ensuring devices always remain offline","Removing all system notifications"], ans:1},
+        {q:"Why is HCI crucial in IoT systems?", options:["It hides system feedback","It ensures usability and intuitive interaction across devices","It prevents real-time interaction","It forces users to follow only one workflow"], ans:1},
+        {q:"HaptiDrag creates friction using:", options:["Heated plates","Ultrasonic vibrations","Electroadhesion technology","Physical wheels"], ans:2},
+        {q:"HaptiDrag enhances VR by:", options:["Giving realistic tactile feedback with variable friction","Removing haptic sensations","Reducing VR stability","Removing all gestures"], ans:0},
+        {q:"MobiTangibles supports VR tool training by:", options:["Tracking small tool movements using smartphone magnetometers","Using heat sensors only","Removing all sensors","Replacing tools with QR codes"], ans:0},
+        {q:"A limitation of MobiTangibles is:", options:["It cannot function on wooden surfaces","It may damage magnetic-sensitive objects like credit cards","It needs no smartphone","It cannot detect small magnets at close range"], ans:1}
+      ],
+
+      // Week 10
+      [
+        {q:"LLMs are primarily designed to:", options:["Predict and generate language using large-scale training data","Render 3D animations","Compress multimedia files","Control robotic hardware"], ans:0},
+        {q:"Which of the following is an example of a multimodal input for an AI system?", options:["Only typed text","Text, image, or audio combined","A Wi-Fi password","A device serial number"], ans:1},
+        {q:"What is the function of prompting in LLM interactions?", options:["Debugging internal model weights","Giving the model instructions or context to perform a task","Measuring CPU temperature","Optimizing internet bandwidth"], ans:1},
+        {q:"Which is a key challenge in AI-based personalization?", options:["Limited screen brightness","Privacy concerns around user data","High-fidelity UI design","Lack of color contrast in icons"], ans:1},
+        {q:"In behavior modeling, “Effect” refers to:", options:["The color of the UI","The user’s actual response or action","The predicted CPU usage","The system’s refresh rate"], ans:1},
+        {q:"Zero-shot prompting allows the model to:", options:["Produce outputs without being given examples","Run without electricity","Access private user data","Train without GPUs"], ans:0},
+        {q:"Which of these is a benefit of AI for accessibility?", options:["Faster firmware updates","Real-time speech-to-text for deaf users","Higher download speeds","Larger app icons"], ans:1},
+        {q:"Behavior-optimized content refers to:", options:["Messages crafted to trigger specific user reactions","Code that compiles automatically","Images compressed for mobile phones","Deleted browsing history"], ans:0},
+        {q:"Ethical concerns with LLMs include:", options:["Keyboard layouts","Bias, manipulation risk, and misinformation","Slow Wi-Fi speed","File naming conventions"], ans:1},
+        {q:"An MLLM (Multimodal Large Language Model) improves HCI by:", options:["Understanding and generating across multiple input/output formats","Replacing all user research","Removing the need for interfaces","Turning apps into offline-only tools"], ans:0}
+      ],
+
+      // Week 11
+      [
+        {q:"Privacy in HCI refers to:", options:["Users’ ability to control their personal data","Increasing app size","Removing encryption from messages","Designing only visual elements"], ans:0},
+        {q:"Which of the following is an example of a security feature?", options:["Dark themes","Two-factor authentication (2FA)","Changing wallpapers","Offline advertisements"], ans:1},
+        {q:"Deepfakes are created using:", options:["Generative Adversarial Networks (GANs)","Spreadsheet formulas","Static HTML tags","Audio compression tools"], ans:0},
+        {q:"Which type of harm involves AI generating biased or unfair outcomes?", options:["Bias and discrimination","Increased RAM usage","Reduced display brightness","Slow keyboard response"], ans:0},
+        {q:"A real-world example of privacy by design is:", options:["WhatsApp’s end-to-end encryption","Phone ringtones","Auto-rotate screen settings","File naming conventions"], ans:0},
+        {q:"One major risk of deepfakes is:", options:["Creating propaganda or misinformation","Improving audio quality","Faster battery charging","Removing the need for passwords"], ans:0},
+        {q:"Security in HCI focuses on:", options:["Protecting user data from unauthorized access","Increasing the number of UI animations","Designing only for children","Removing all login screens"], ans:0},
+        {q:"GDPR impacts HCI design by requiring:", options:["Clear consent mechanisms and privacy transparency","More emojis in interfaces","Mandatory dark mode","Faster loading animations"], ans:0},
+        {q:"Which tool supports secure authentication?", options:["Google Authenticator","Stopwatch app","Video filters","Calculator app"], ans:0},
+        {q:"A major challenge in privacy & security design is:", options:["Balancing usability with strong protections","Removing all security features entirely","Hiding all system messages","Making interfaces more confusing"], ans:0}
+      ]
+    ];
+
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let currentMode = 0;
+    let userAnswers = [];   // Store final answer for each question
+
+    function shuffleOptions(question) {
+      const originalAns = question.ans;
+      let combined = question.options.map((text, idx) => ({text, idx}));
+      
+      for (let i = combined.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [combined[i], combined[j]] = [combined[j], combined[i]];
+      }
+
+      const newOptions = combined.map(item => item.text);
+      const newAnsIndex = combined.findIndex(item => item.idx === originalAns);
+
+      return { q: question.q, options: newOptions, ans: newAnsIndex };
+    }
+
+    function startQuiz(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+      document.getElementById(`nav-${mode}`).classList.add('active');
+
+      let selectedQs = [];
+      if (mode === 0) {
+        for (let i = 1; i <= 11; i++) selectedQs = selectedQs.concat(weekQuestions[i]);
+      } else {
+        selectedQs = [...weekQuestions[mode]];
+      }
+
+      currentQuestions = selectedQs.map(q => shuffleOptions(q))
+                                 .sort(() => Math.random() - 0.5);
+
+      currentIndex = 0;
+      score = 0;
+      userAnswers = new Array(currentQuestions.length).fill(-1);
+
+      document.getElementById('home-screen').style.display = 'none';
+      document.getElementById('quiz-screen').style.display = 'block';
+      document.getElementById('score-screen').style.display = 'none';
+
+      document.getElementById('total-q').textContent = currentQuestions.length;
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      const q = currentQuestions[currentIndex];
+      document.getElementById('q-number').textContent = currentIndex + 1;
+      document.getElementById('question-text').textContent = q.q;
+
+      const container = document.getElementById('options-container');
+      container.innerHTML = '';
+
+      q.options.forEach((option, i) => {
+        const div = document.createElement('div');
+        div.className = 'option';
+        div.innerHTML = `<strong>${String.fromCharCode(65 + i)}.</strong> ${option}`;
+        div.onclick = () => selectOption(i, div);
+        container.appendChild(div);
+      });
+
+      // Restore previously selected answer if any
+      if (userAnswers[currentIndex] !== -1) {
+        const options = document.querySelectorAll('.option');
+        options[userAnswers[currentIndex]].classList.add('selected');
+      }
+
+      document.getElementById('next-btn').textContent = (currentIndex === currentQuestions.length - 1) 
+        ? "Finish Quiz & See Score" : "Next Question →";
+      document.getElementById('prev-btn').disabled = (currentIndex === 0);
+    }
+
+    function selectOption(index, element) {
+      document.querySelectorAll('.option').forEach(el => {
+        el.classList.remove('selected', 'correct', 'wrong');
+      });
+
+      element.classList.add('selected');
+      userAnswers[currentIndex] = index;
+
+      // Show immediate feedback
+      const correctIndex = currentQuestions[currentIndex].ans;
+      const options = document.querySelectorAll('.option');
+
+      if (index === correctIndex) {
+        options[index].classList.add('correct');
+      } else {
+        options[index].classList.add('wrong');
+        options[correctIndex].classList.add('correct');
+      }
+    }
+
+    function nextQuestion() {
+      if (userAnswers[currentIndex] === -1) return;   // Must answer before proceeding
+
+      if (currentIndex < currentQuestions.length - 1) {
+        currentIndex++;
+        loadQuestion();
+      } else {
+        calculateFinalScore();
+        showScore();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        loadQuestion();
+      }
+    }
+
+    function calculateFinalScore() {
+      score = 0;
+      for (let i = 0; i < currentQuestions.length; i++) {
+        if (userAnswers[i] === currentQuestions[i].ans) {
+          score++;
+        }
+      }
+    }
+
+    function showScore() {
+      document.getElementById('quiz-screen').style.display = 'none';
+      const scoreScreen = document.getElementById('score-screen');
+      scoreScreen.style.display = 'block';
+
+      const totalQ = currentQuestions.length;
+      const percent = Math.round((score / totalQ) * 100);
+
+      document.getElementById('final-score').innerHTML = `${score}/${totalQ}<br><span style="font-size:2rem;">${percent}%</span>`;
+
+      const msg = percent >= 80 ? "🎉 Excellent! You have mastered the topic!" :
+                  percent >= 60 ? "👍 Good performance! Keep practicing." :
+                  "📚 Review the concepts again. You will improve!";
+      document.getElementById('score-message').innerHTML = msg;
+    }
+
+    function restartCurrentQuiz() {
+      startQuiz(currentMode);
+    }
+
+    function goHome() {
+      document.getElementById('score-screen').style.display = 'none';
+      document.getElementById('home-screen').style.display = 'block';
+    }
+
+    // Initialize Home Cards
+    window.onload = () => {
+      const grid = document.getElementById('quiz-grid');
+      const titles = [
+        "Mixed Quiz (All 110 Questions)", 
+        "Week 1 : Introduction to HCI", 
+        "Week 2 : Interaction Design & UX", 
+        "Week 3 : Design Thinking", 
+        "Week 4 : User Perspectives & Research", 
+        "Week 5 : Conceptual Models & Cognition", 
+        "Week 6 : Data Requirements & Ethics", 
+        "Week 7 : Prototyping", 
+        "Week 8 : Evaluation in HCI", 
+        "Week 9 : IoT & HCI", 
+        "Week 10 : AI, LLMs & Multimodal", 
+        "Week 11 : Privacy & Security"
+      ];
+
+      titles.forEach((title, i) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <h3>${title}</h3>
+          <p>${i === 0 ? '110 Random MCQs' : '10 MCQs'} • Options shuffled every time</p>
+          <button class="start-btn" onclick="startQuiz(${i})">Start Quiz Now</button>
+        `;
+        grid.appendChild(card);
+      });
+    };
+  </script>
+</body>
+</html>
